@@ -47,28 +47,3 @@ Using one to two of the largest in each industry subset with a few exceptions.
 - Are we predicting stocks of a specific industry?
     + They all react different amounts to different factors
     + Tech, finance, retail, natural resource, etc.
-
-## Areas of Exploration
-
-- Technicals
-    + Finding support/resistance levels
-    + SMA crossovers
-    + Calculating BBs
-    + Recognize overshooting
-    + Deviation from related companies and market index
-- Monte Carlo method & standard deviation
-- Associating "attributes" with companies
-    + Level of earning report volatility
-    + year on year growth
-- Google Trends
-
-## Plan of Action
-
-- Create sample data set emulating price movement
-    + Specially selected to test technical indicator detection
-    + Basic "hello world" test
-- Run on entire historical data
-- Assign importance to each indicator
-    + Refer to "Areas of Exploration" and "Outline"
-    + Create your own neural net or perceptron, adding weights for final decision
-- Apply though machine learning 
