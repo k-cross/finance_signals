@@ -41,9 +41,3 @@ Using one to two of the largest in each industry subset with a few exceptions.
     + Fed Meetings, rate hike, etc.
     + Deviation from indexes or tickers in same industry
 - Aiming for long term trading, profitability in weeks/months timeframe
-
-## Decide if
-
-- Are we predicting stocks of a specific industry?
-    + They all react different amounts to different factors
-    + Tech, finance, retail, natural resource, etc.
