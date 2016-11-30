@@ -16,14 +16,17 @@ Financial Signals Analysis
 
 ## Tickers
 
-* Using one to two of the largest in each industry subset with a few exceptions.
-    * AMZN Internet Services
-    * GOOGL Internet Services
-    * FB Internet Services
-    * AAPL Consumer Goods
-    * MSFT Business Software
-    * IBM Business Software
-    * ORCL Business Software
+Using one to two of the largest in each industry subset with a few exceptions.
+
+| Ticker | Industry          |
+| ------ | ----------------- |
+| AMZN   | Internet Services |
+| GOOGL  | Internet Services |
+| FB     | Internet Services |
+| AAPL   | Consumer Goods    |
+| MSFT   | Business Software |
+| IBM    | Business Software |
+| ORCL   | Business Software |
 
 ## Outline
 
