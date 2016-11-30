@@ -1,0 +1,17 @@
+# Java, Intellij, Eclipse things
+
+bin/
+.settings/
+.classpath
+.project
+*.class
+.metadata/
+.recommenders/
+*.iml
+.idea/
+
+# Python things
+
+*.pyc
+out/
+__pycache__
