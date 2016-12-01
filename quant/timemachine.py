@@ -76,13 +76,13 @@ def verifyprediction(stance, price, date, timeperiod=60, method='direction'):
 
     if stance == 1:  # long
         # print("long stance")
-        prices = [row['h'] for row in window]
+        prices = [stkday.h for stkday in window]
         highest = max(prices)
         period_perc = (highest - price) / price
         period_median = (statistics.median(prices) - price) / price
     elif stance == -1:  # short
         # print("short stance")
-        prices = [row['l'] for row in window]
+        prices = [stkday.l for stkday in window]
         lowest = min(prices)
         period_perc = (price - lowest) / price
         period_median = (price - statistics.median(prices)) / price
@@ -160,11 +160,11 @@ for x in range(start, end):
     if stance != 0:
         print("Outlook on day: " + str(x))
         moves += 1
-    r = verifyprediction(stance, snapshot[x]['c'], snapshot[x]['date'], method="direction")
+    r = verifyprediction(stance, snapshot[x].c, snapshot[x].date, method="direction")
     if r is not None:
         round(r, 3)
         scores.append(r)
-        scorelog.append((str(snapshot[x]['date']), r))
+        scorelog.append((str(snapshot[x].date), r))
 
 print("Avg performance of transactions: %f" % statistics.mean(scores))
 print("Total moves: %d" % moves)

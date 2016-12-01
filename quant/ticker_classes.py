@@ -3,17 +3,19 @@ from datetime import datetime
 
 class StockDay:
 
-    def __init__(self, line, line_number):
+    def __init__(self, line, ln_num):
         line = line.strip('\n')
         data = line.split(',')
 
-        self.line_number = line_number
+        # Line number, date, open, high, low, close, volume, and technical analysis
+        self.ln_num = ln_num
         self.date = datetime.strptime(data[0], '%Y-%m-%d').date()
         self.o = round(float(data[1]), 2)
         self.h = round(float(data[2]), 2)
         self.l = round(float(data[3]), 2)
         self.c = round(float(data[4]), 2)
         self.vol = int(data[5])
+        self.ta = {}
 
 
 class TickerMetrics:

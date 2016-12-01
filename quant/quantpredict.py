@@ -48,10 +48,10 @@ class profile(object):
     #         # TODO: save as proper csv
     #         file.write(self.pricing)
 
-    def add_study(self, study_name, lst):
+    def addstudy(self, name, lst):
         """ Adds study data points to profile """
-        for index, date in enumerate(self.pricing):
-            date[study_name] = lst[index]
+        for index, stkday in enumerate(self.pricing):
+            stkday.ta[name] = lst[index]
 
     # def order(type):
     #     """ logs an order today """
@@ -62,7 +62,7 @@ class profile(object):
         Get a particular series of data.
         For example, specify a study ('bb_lower'), or price ('c')
         """
-        return [date[plot] for date in self.pricing]
+        return [stkday[plot] for stkday in self.pricing]
 
 
 def analyze(profile):
@@ -95,15 +95,15 @@ def technical(profile):
     # print(prices)
 
     sma = ta.SMA(prices, timeperiod=200)
-    profile.add_study("sma", [round(float(point), 2) for point in sma])
+    profile.addstudy("sma", [round(float(point), 2) for point in sma])
 
     bb_upper, bb_middle, bb_lower = ta.BBANDS(prices, 100, 2, 2)
-    profile.add_study("bb_upper", [round(float(point), 2) for point in bb_upper])
-    profile.add_study("bb_middle", [round(float(point), 2) for point in bb_middle])
-    profile.add_study("bb_lower", [round(float(point), 2) for point in bb_lower])
+    profile.addstudy("bb_upper", [round(float(point), 2) for point in bb_upper])
+    profile.addstudy("bb_middle", [round(float(point), 2) for point in bb_middle])
+    profile.addstudy("bb_lower", [round(float(point), 2) for point in bb_lower])
 
     rsi = ta.RSI(prices, timeperiod=14)
-    profile.add_study("rsi", [round(float(point), 2) for point in rsi])
+    profile.addstudy("rsi", [round(float(point), 2) for point in rsi])
 
 
 def predict(profile):
@@ -111,21 +111,21 @@ def predict(profile):
     Weighs different indicators from an analyzed profile, and deduce a prediction on future movement
     """
     today = len(profile.pricing) - 1
-    data = profile.pricing[today]
+    stkday = profile.pricing[today]
     # print(todaysprice)
-    # momentum = [data['bb_middle'], data['sma']]
-    price = data['c']
+    # momentum = [stkday['bb_middle'], stkday['sma']]
+    price = stkday.c
 
-    if price > data['bb_upper']:
+    if price > stkday.ta['bb_upper']:
         # print("Danger! Potential price correction, sell!")
         return -1
-    elif price > data['bb_middle'] and price > data['sma']:
+    elif price > stkday.ta['bb_middle'] and price > stkday.ta['sma']:
         # print("Figure out if it's in a channel")
         return 0
-    elif price > data['bb_lower'] and price < data['sma']:
+    elif price > stkday.ta['bb_lower'] and price < stkday.ta['sma']:
         # print("Down swing, avoid")
         return 0
-    elif price < data['bb_lower'] or price < data['sma']:
+    elif price < stkday.ta['bb_lower'] or price < stkday.ta['sma']:
         # print("Potentially undervalued, buy with caution")
         return 1
     else:
