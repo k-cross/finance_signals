@@ -1,21 +1,3 @@
-/**
- * Licensed to the Apache Software Foundation (ASF) under one
- * or more contributor license agreements.  See the NOTICE file
- * distributed with this work for additional information
- * regarding copyright ownership.  The ASF licenses this file
- * to you under the Apache License, Version 2.0 (the
- * "License"); you may not use this file except in compliance
- * with the License.  You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
 package com.cloudera.datascience.montecarlorisk
 
 import org.apache.spark.SparkContext
@@ -24,8 +6,13 @@ import org.apache.spark.serializer.{KryoSerializer, KryoRegistrator}
 import com.esotericsoftware.kryo.Kryo
 import org.apache.commons.math3.random.MersenneTwister
 import org.apache.commons.math3.distribution.MultivariateNormalDistribution
+import org.apache.commons.math3.stat.correlation.Covariance
+import org.apache.commons.math3.stat.regression.OLSMultipleLinearRegression
 
 import scala.io.Source
+import scala.collection.mutable.ArrayBuffer
+import java.text.SimpleDateFormat
+import java.io.File
 import java.io.PrintWriter
 
 case class Instrument(factorWeights: Array[Double], minValue: Double = 0,
@@ -39,18 +26,45 @@ class MyRegistrator extends KryoRegistrator {
 
 object MonteCarloRisk {
   def main(args: Array[String]) {
-    val sparkConf = new SparkConf().setAppName("Monte Carlo Risk")
+    val sparkConf = new SparkConf().setAppName("Monte Carlo Risk (VaR) Computer")
     sparkConf.set("spark.serializer", classOf[KryoSerializer].getName)
     sparkConf.set("spark.kryo.registrator", classOf[MyRegistrator].getName)
     val sc = new SparkContext(sparkConf)
 
     // Parse arguments and read input data
     val instruments = readInstruments(args(0))
-    val numTrials = args(1).toInt
-    val parallelism = args(2).toInt
+    val numTrials = 10000000
+    val parallelism = 1000
     val factorMeans = readMeans(args(3))
     val factorCovariances = readCovariances(args(4))
     val seed = if (args.length > 5) args(5).toLong else System.currentTimeMillis()
+
+    // Additions to Instruments
+    val start = new DateTime(2010, 07, 1, 0, 0)
+    val end = new DateTime(2015, 05, 1, 0, 0)
+    
+    val files = new File("data/stocks/").listFiles()
+    val rawStocks: Seq[Array[(DateTime, Double)]] =
+      files.flatMap(file => {
+        try {
+          Some(readYahooHistory(file))
+        }
+        catch {
+          case e: Exception => None
+        }
+      }).filter(_.size >= 260*5)
+    
+    val stocks: Seq[Array[Double]] = rawStocks.
+      map(trimToRegion(_, start, end)).
+      map(fillInHistory(_, start, end))
+    
+    val stocksReturns = stocks.map(twoWeekReturns)
+    val factorsReturns = factors.map(twoWeekReturns)
+    val factorMat = factorMatrix(factorsReturns)
+    val factorFeatures = factorMat.map(featurize)
+    val models = stocksReturns.map(linearModel(_, factorFeatures))
+    val factorWeights = models.map(_.estimateRegressionParameters()).toArray
+
 
     // Send all instruments to every node
     val broadcastInstruments = sc.broadcast(instruments)
@@ -136,5 +150,69 @@ object MonteCarloRisk {
     val src = Source.fromFile(covsFile)
     val covs = src.getLines().map(_.split(",")).map(_.map(_.toDouble))
     covs.toArray
+  }
+
+  def readYahooHistory(file: File): 
+    Array[(DateTime, Double)] = {
+      val format = new SimpleDateFormat("yyyy-MM-dd")
+      val lines = Source.fromFile(file).getLines().toSeq
+      lines.tail.map(line => {
+        val cols = line.split(',')
+        val date = new DateTime(format.parse(cols(0)))
+        val value = cols(1).toDouble
+        (date, value)
+      }).reverse.toArray
+  }
+
+  def trimToRegion(history: Array[(DateTime, Double)],
+                   start: DateTime,
+                   end: DateTime):
+    Array[(DateTime, Double)] = {
+    var trimmed = history.
+      dropWhile(_._1 < start).takeWhile(_._1 <= end)
+    if (trimmed.head._1 != start) {
+      trimmed = Array((start, trimmed.head._2)) ++ trimmed
+    }
+    if (trimmed.last._1 != end) {
+      trimmed = trimmed ++ Array((end, trimmed.last._2))
+    }
+    trimmed
+  }
+
+  def fillInHistory(history: Array[(DateTime, Double)],
+                    start: DateTime,
+                    end: DateTime):
+    Array[(DateTime, Double)] = {
+      var cur = history
+      val filled = new ArrayBuffer[(DateTime, Double)]()
+      var curDate = start
+  
+      while (curDate < end) {
+        if (cur.tail.nonEmpty && cur.tail.head._1 == curDate) {
+          cur = cur.tail
+        }
+  
+        filled += ((curDate, cur.head._2))
+  
+        curDate += 1.days
+        // Skip weekends
+        if (curDate.dayOfWeek().get > 5) curDate += 2.days
+      }
+      filled.toArray
+  }
+  
+  def twoWeekReturns(history: Array[(DateTime, Double)]):
+    Array[Double] = {
+      history.sliding(10).
+        map(window => window.last._2 - window.head._2).toArray
+  }
+  
+  def factorMatrix(histories: Seq[Array[Double]]):
+    Array[Array[Double]] = {
+      val mat = new Array[Array[Double]](histories.head.length)
+      for (i <- 0 until histories.head.length) {
+        mat(i) = histories.map(_(i)).toArray
+      }
+      mat
   }
 }
