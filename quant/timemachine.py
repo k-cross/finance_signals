@@ -17,12 +17,12 @@ import bisect
 import copy
 import matplotlib.pyplot as grapher
 import sys
-
+import statistics
 
 # Static Data
 ticker = 'AMZN'
 samplespath = "../samples/%s.csv" % ticker
-lines_5yr = 1260
+# lines_5yr = 1260
 cumulativehistory = []
 
 
@@ -32,13 +32,13 @@ def jumpto(year, month, day):
     return bisect.bisect_left([row['date'] for row in cumulativehistory], d)
 
 
-def verifyprediction(stance, price, date, timeperiod=60, method="direction"):
+def verifyprediction(stance, price, date, timeperiod=60, method='direction'):
     """
     Determine if the predicted stance is correct.
 
-    If method is direction, prediction for general direction is checked. The average closing price of the following days within the timeperiod limit is compared.
+    If method is direction, prediction for general direction is checked. The median closing price of the following days within the timeperiod limit is compared to the price passed in.
 
-    If method is order, prediction is treated as actual order and expected to be profitable within the timeperiod. Price needs to move at least 5% in the desired direction.
+    If method is order, prediction is treated as actual order and expected to be profitable within the timeperiod. Price needs to move at least 5% in the desired direction. Return is how much more or less than percentage target the ticker reached in highest/lowest intraday trading.
 
     i.e. a buy order at 100 would look for a high of 105 in the next X (timeperiod) days. A sell order at 100 looks for a low of 95 or less before declaring success.
 
@@ -46,33 +46,42 @@ def verifyprediction(stance, price, date, timeperiod=60, method="direction"):
         stance of prediction, to buy or sell
         closing price of that day
         date prediction made on
-    Out: a number representing percentage movement relative to horizon. Positive is desireable, negative means price movement in opposite to prediction
+    Out: a number representing percentage movement relative to horizon. Positive is desireable, negative means price movement in opposite to prediction.
     """
+    if stance == 0:
+        return
     today = jumpto(date.year, date.month, date.day)
     window = cumulativehistory[today:today + timeperiod]
-    percentage = 0.05
-    print("%d price: %d" % (stance, price))
+    score = 0
+    print("stance %d, price %d, %s method" % (stance, price, method))
 
     if stance == 1:  # buy
+        # print("buy stance")
         prices = [row['h'] for row in window]
-
-        def check(a):
-            return price * (1 + percentage) < a
-
+        highest = max(prices)
+        period_perc = (highest - price) / price
+        period_median = (statistics.median(prices) - price) / price
     elif stance == -1:  # sell
         # print("sell stance")
         prices = [row['l'] for row in window]
-        # print(price * (1 - percentage))
-
-        def check(a):
-            return price * (1 - percentage) > a
-    else:
-        # Stance zero meaning no action
-        pass
+        lowest = min(prices)
+        period_perc = (price - lowest) / price
+        period_median = (price - statistics.median(prices)) / price
 
     # print(', '.join([str(p) for p in prices]))
-    print(list(map(check, prices)))
-    print(min(prices))
+    # print(list(map(check, prices)))
+    # print(min(prices))
+    # print(statistics.median(prices))
+
+    if stance != 0:
+        if method == 'direction':
+            score = period_median
+        elif method == 'order':
+            score = period_perc
+        print("score: " + str(score))
+        return score
+    else:
+        return None
 
 
 # Read history
@@ -109,24 +118,43 @@ capital = 10000
 profit = 0
 holdings = 0
 
-# for x in range(end - 1, end):
-#     print("Outlook on day: " + str(cumulativehistory[x]['date']))
-#     # snapshot = copy.deepcopy(cumulativehistory[:jumpto(2012, 7, 1) + 1])
-#     snapshot = copy.deepcopy(cumulativehistory[:x])
-#     q = quantpredict.profile(ticker, snapshot)
-#     quantpredict.analyze(q)
-#     stance = quantpredict.predict(q)
+moves = 0
+scores = []
+scorelog = []
 
+for x in range(start, end):
+    # snapshot = copy.deepcopy(cumulativehistory[:jumpto(2012, 7, 1) + 1])
+    snapshot = copy.deepcopy(cumulativehistory[:x + 1])
+    q = quantpredict.profile(ticker, snapshot)
+    quantpredict.analyze(q)
+    stance = quantpredict.predict(q)
+    if stance != 0:
+        print("Outlook on day: " + str(x))
+        moves += 1
+    r = verifyprediction(stance, snapshot[x]['c'], snapshot[x]['date'], method="direction")
+    if r is not None:
+        round(r, 3)
+        scores.append(r)
+        scorelog.append((str(snapshot[x]['date']), r))
+
+print("Avg performance of transactions: %f" % statistics.mean(scores))
+print("Total moves: %d" % moves)
+print("Total profitable moves: %d" % sum(x > 0 for x in scores))
+print("Total high-performance moves: %d" % sum(x > 0.1 for x in scores))
+print("Prediction accuracy: %f" % (sum(x > 0.05 for x in scores) / moves))
+print("Full score log:")
+for s in scorelog:
+    print(s)
 # print(profit)
 
-print("Outlook on day: " + str(cumulativehistory[start]['date']))
-# snapshot = copy.deepcopy(cumulativehistory[:jumpto(2012, 7, 1) + 1])
-snapshot = copy.deepcopy(cumulativehistory[:start + 1])
-# print(snapshot[len(snapshot) - 1])
-q = quantpredict.profile(ticker, snapshot)
-quantpredict.analyze(q)
-stance = quantpredict.predict(q)
-verifyprediction(stance, snapshot[start]['c'], snapshot[start]['date'], method="order")
+# print("Outlook on day: " + str(cumulativehistory[start]['date']))
+# # snapshot = copy.deepcopy(cumulativehistory[:jumpto(2012, 7, 1) + 1])
+# snapshot = copy.deepcopy(cumulativehistory[:start + 1])
+# # print(snapshot[len(snapshot) - 1])
+# q = quantpredict.profile(ticker, snapshot)
+# quantpredict.analyze(q)
+# stance = quantpredict.predict(q)
+# verifyprediction(stance, snapshot[start]['c'], snapshot[start]['date'], method="order")
 
 # Sample plotting
 

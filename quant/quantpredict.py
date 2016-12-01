@@ -53,6 +53,10 @@ class profile(object):
         for index, date in enumerate(self.pricing):
             date[study_name] = lst[index]
 
+    # def order(type):
+    #     """ logs an order today """
+    #     pass
+
     def getplot(self, plot):
         """
         Get a particular series of data.
@@ -116,9 +120,12 @@ def predict(profile):
         # print("Danger! Potential price correction, sell!")
         return -1
     elif price > data['bb_middle'] and price > data['sma']:
-        # print("Strong!")
-        return 1
-    elif price < data['sma'] or price < data['bb_lower']:
+        # print("Figure out if it's in a channel")
+        return 0
+    elif price > data['bb_lower'] and price < data['sma']:
+        # print("Down swing, avoid")
+        return 0
+    elif price < data['bb_lower'] or price < data['sma']:
         # print("Potentially undervalued, buy with caution")
         return 1
     else:
