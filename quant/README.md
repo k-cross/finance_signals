@@ -30,7 +30,7 @@ Quant Approach
 2. ~~Write prediction engine skeleton that **calculates technical indicators** for historical data~~
 3. ~~Read data from historical prices and **generate prediction** using simple technicals and other indicators~~
 4. ~~Controller checks prediction vs actual price, **scoots to next date** and calculates again, simulating passing of time, prediction accuracy does not matter yet~~
-5. **Run on entire historical data set** and see how it performs
+5. ~~**Run on entire historical data set** and see how it performs~~
 6. **Assign weights** to individual indicators depending on likelihood, importance, etc and try to optimize prediction accuracy
 7. Try to implement **advanced technicals** and improve accuracy
 8. Implement **Moonshot technicals**

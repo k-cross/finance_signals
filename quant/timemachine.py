@@ -42,11 +42,14 @@ def verifyprediction(stance, price, date, timeperiod=60, method='direction'):
 
     i.e. a buy order at 100 would look for a high of 105 in the next X (timeperiod) days. A sell order at 100 looks for a low of 95 or less before declaring success.
 
-    In: details of the prediction
-        stance of prediction, to buy or sell
-        closing price of that day
-        date prediction made on
-    Out: a number representing percentage movement relative to horizon. Positive is desireable, negative means price movement in opposite to prediction.
+    In:
+    details of the prediction
+    stance of prediction, to buy or sell
+    closing price of that day
+    date prediction made on
+
+    Out:
+    a number representing percentage movement relative to horizon. Positive is desireable, negative means price movement in opposite to prediction.
     """
     if stance == 0:
         return
