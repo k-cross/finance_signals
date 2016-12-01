@@ -3,10 +3,11 @@
 
 from ticker_classes import StockDay
 
+
 def get_stock_data(ticker):
     # Static Data
     csv = "../samples/%s.csv" % ticker
-    lines_5yr = 1260
+    # lines_5yr = 1260
     stock_day_list = []
 
     line_counter = 0

@@ -43,7 +43,7 @@ except IndexError:
 def locatedate(year, month, day):
     """ Find index of a requested day in historic data """
     d = datetime(year, month, day).date()
-    return bisect.bisect_left([row['date'] for row in cumulativehistory], d)
+    return bisect.bisect_left([s.date for s in cumulativehistory], d)
 
 
 def verifyprediction(stance, price, date, timeperiod=60, method='direction'):
@@ -124,12 +124,10 @@ def verifyprediction(stance, price, date, timeperiod=60, method='direction'):
 #             'c': round(float(data[4]), 2),
 #             'vol': int(data[5])})
 # =======
-# Consider using dictionary if it helps with quantpredict so you don't need indexes all the time or something
-# https://docs.python.org/3/library/csv.html
 stock_data = get_stock_data(ticker)
 
 for stock_day in stock_data:
-        history.insert(0, (stock_day.day, stock_day.op, stock_day.hi, stock_day.lo, stock_day.cl, stock_day.vol))
+    cumulativehistory.insert(0, stock_day)
 # >>>>>>> origin/master
 
 # Debug stuff

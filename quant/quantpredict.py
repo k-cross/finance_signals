@@ -86,11 +86,11 @@ def technical(profile):
     In: profile with basic ohlc price data
     Out: profile updated with studies merged with profile's price history
     """
-    prices = {'open': np.array([record['o'] for record in profile.pricing]),
-              'high': np.array([record['h'] for record in profile.pricing]),
-              'low': np.array([record['l'] for record in profile.pricing]),
-              'close': np.array([record['c'] for record in profile.pricing]),
-              'volume': np.array([record['vol'] for record in profile.pricing])}
+    prices = {'open': np.array([day.o for day in profile.pricing]),
+              'high': np.array([day.h for day in profile.pricing]),
+              'low': np.array([day.l for day in profile.pricing]),
+              'close': np.array([day.c for day in profile.pricing]),
+              'volume': np.array([day.vol for day in profile.pricing])}
     # print(prices['open'])
     # print(prices)
 
