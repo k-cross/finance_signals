@@ -10,20 +10,34 @@ Out:
 historical prediction
 accuracy of prediction
 """
-
+import sys
 from datetime import datetime
 import quantpredict
 import bisect
 import copy
+# <<<<<<< HEAD
 import matplotlib.pyplot as grapher
 import sys
 import statistics
 
 # Static Data
-ticker = 'AMZN'
-samplespath = "../samples/%s.csv" % ticker
+# ticker = 'AMZN'
+# samplespath = "../samples/%s.csv" % ticker
 # lines_5yr = 1260
 cumulativehistory = []
+# =======
+from ticker_classes import StockDay
+from read_ticker_csv import get_stock_data
+
+ticker = ""
+try:
+    ticker = sys.argv[1]
+except IndexError:
+    raise IndexError("Need to enter valid ticker as a system param.")
+
+#Static Data
+# history = []
+# >>>>>>> origin/master
 
 
 def locatedate(year, month, day):
@@ -93,21 +107,30 @@ def verifyprediction(stance, price, date, timeperiod=60, method='direction'):
 
 # Read history
 
-line_counter = 0
-with open(samplespath) as file:
-    file.readline()  # remove csv header
-    for line in file:
-        line_counter += 1
-        line = line.strip('\n')
-        data = line.split(',')
-        # Insert entry and maintain ordering from old to new
-        cumulativehistory.insert(0, {
-            'date': datetime.strptime(data[0], '%Y-%m-%d').date(),
-            'o': round(float(data[1]), 2),
-            'h': round(float(data[2]), 2),
-            'l': round(float(data[3]), 2),
-            'c': round(float(data[4]), 2),
-            'vol': int(data[5])})
+# <<<<<<< HEAD
+# line_counter = 0
+# with open(samplespath) as file:
+#     file.readline()  # remove csv header
+#     for line in file:
+#         line_counter += 1
+#         line = line.strip('\n')
+#         data = line.split(',')
+#         # Insert entry and maintain ordering from old to new
+#         cumulativehistory.insert(0, {
+#             'date': datetime.strptime(data[0], '%Y-%m-%d').date(),
+#             'o': round(float(data[1]), 2),
+#             'h': round(float(data[2]), 2),
+#             'l': round(float(data[3]), 2),
+#             'c': round(float(data[4]), 2),
+#             'vol': int(data[5])})
+# =======
+# Consider using dictionary if it helps with quantpredict so you don't need indexes all the time or something
+# https://docs.python.org/3/library/csv.html
+stock_data = get_stock_data(ticker)
+
+for stock_day in stock_data:
+        history.insert(0, (stock_day.day, stock_day.op, stock_day.hi, stock_day.lo, stock_day.cl, stock_day.vol))
+# >>>>>>> origin/master
 
 # Debug stuff
 # print("read %i lines" % line_counter)
@@ -120,7 +143,7 @@ with open(samplespath) as file:
 
 # Simulate today is july 1, 2011
 start = locatedate(2011, 7, 1)  # ensure enough data for 200 SMA
-end = line_counter
+end = len(cumulativehistory) - 1
 
 capital = 10000
 profit = 0
@@ -166,8 +189,8 @@ for s in scorelog:
 
 # Sample plotting
 
-if len(sys.argv) > 1:
-    if sys.argv[1] == "--graph":
+if len(sys.argv) > 2:
+    if sys.argv[2] == "--graph":
         # snapshot = copy.deepcopy(cumulativehistory)
         # q = quantpredict.profile(ticker, snapshot)
         # quantpredict.analyze(q)
@@ -184,7 +207,7 @@ if len(sys.argv) > 1:
         # grapher.subplot(212)
         # grapher.plot(q.studies['rsi'])
         grapher.show()
-    elif sys.argv[1] == "--graph-all":
+    elif sys.argv[2] == "--graph-all":
         snapshot = copy.deepcopy(cumulativehistory)
         q = quantpredict.profile(ticker, snapshot)
         quantpredict.analyze(q)
