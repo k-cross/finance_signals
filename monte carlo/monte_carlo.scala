@@ -4,6 +4,7 @@ import org.apache.commons.math3.distribution.MultivariateNormalDistribution
 import org.apache.commons.math3.stat.regression.OLSMultipleLinearRegression
 import org.apache.commons.math3.stat.correlation.PearsonsCorrelation
 import org.apache.commons.math3.stat.correlation.Covariance
+import org.apache.commit.math3.random.MersenneTwister
 import breeze.plot.
 import java.text.SimpleDateFormat
 import java.io.File
@@ -125,6 +126,55 @@ def plotDistribution(samples: Array[Double]) {
 }
 
 
+def instrumentTrialReturn(instrument: Array[Double], trial: Array[Double]):
+  Double = {
+    var instrumentTrialReturn = instrument(0)
+    var i = 0
+    while (i < trial.length) {
+      instrumentTrialReturn += trial(i) * instrument(i+1)
+      i += 1
+    }
+    instrumentTrialReturn
+}
+
+
+def trialReturn(trial: Array[Double], instruments: Seq[Array[Double]]): 
+  Double = {
+    var totalReturn = 0.0
+    for (instrument <- instruments) {
+      totalReturn += instrumentTrialReturn(instrument, trial)
+    }
+    totalReturn
+}
+
+
+def trialReturns(seed: Long, numTrials: Int, instruments: Seq[Array[Double]],
+  factorMeans: Array[Double], factorCovariances: Array[Array[Double]]):
+  Seq[Double] = {
+    val rand = new MersenneTwister(seed)
+    val multivariateNormal = new MultivariateNormalDistribution(
+      rand, factorMeans, factorCovariances)
+    val trialReturns = new Array[Double](numTrials)
+    for (i <- 0 until numTrials) {
+      val trialFactorReturns = multivariateNormal.sample()
+      val trialFeatures = featurize(trialFactorReturns)
+      trialReturns(i) = trialReturn(trialFeatures, instruments)
+    }
+    trialReturns
+}
+
+
+def fivePercentVaR(trials: RDD[Double]): Double = {
+  val topLosses = trials.takeOrdered(math.max(trials.count().toInt / 20, 1))
+  topLosses.last
+}
+
+
+def fivePercentCVaR(trials: RDD[Double]): Double = {
+  val topLosses = trials.takeOrdered(math.max(trials.count().toInt / 20, 1))
+  topLosses.sum / topLosses.length
+}
+
 val start = new DateTime(2010, 07, 1, 0, 0)
 val end = new DateTime(2015, 05, 1, 0, 0)
 
@@ -169,3 +219,14 @@ val factorMeans = factorsReturns.map(factor => factor.sum / factor.size).toArray
 val factorsDist = new MultivariateNormalDistribution(factorMeans, factorCov)
 
 factorsDist.sample() // Samples a set of market conditions
+
+val parallelism = 1000
+val baseSeed = 1496
+val seeds = (baseSeed until baseSeed + parallelism)
+val seedRdd = sc.parallelize(seeds, parallelism)
+val numTrials = 10000000
+val bFactorWeights = sc.broadcast(factorWeights)
+val trials = seedRdd.flatMap(trialReturns(_, numTrials / parallelism,
+  bFactorWeights.value, factorMeans, factorCov))
+val valueAtRisk = fivePercentVaR(trials)
+val conditionalValueAtRisk = fivePercentCVaR(trials)

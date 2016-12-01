@@ -1,0 +1,7 @@
+AMZN 
+GOOGL
+FB
+AAPL 
+MSFT 
+IBM
+ORCL 
