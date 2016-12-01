@@ -7,7 +7,7 @@
 \___\_\__,_/\__,_/_/ /_/\__/_/   /_/   \___/\__,_/_/\___/\__/
 QuantPredict
 
-Given some data for a stock's historical movement, uses quantitative analysis, technical analysis, and other indicators to predict the future movement of a stock.
+Given data for a stock's historical movement, uses quantitative analysis, technical analysis, and other indicators to predict the future movement of a stock.
 
 Currently calibrated to daily movement; intraday not supported.
 
@@ -23,14 +23,9 @@ predicted future movement
 Powered by magic and digital foxes
 """
 
+
 import numpy as np
 import talib.abstract as ta
-# import talib.abstract as tech
-
-
-# sma = abstract.SMA
-# bband = abstract.BBANDS
-# rsi = abstract.RSI
 
 
 class profile(object):
@@ -41,7 +36,6 @@ class profile(object):
     def __init__(self, ticker, pricing):
         self.ticker = ticker
         self.pricing = pricing
-        # self.studies = {}
 
     # def load(self):
     #     """ Load previous processed results """
@@ -56,9 +50,6 @@ class profile(object):
 
     def add_study(self, study_name, lst):
         """ Adds study data points to profile """
-        # self.studies[study_name] = lst
-        # print(len(self.pricing))
-        # print(len(lst))
         for index, date in enumerate(self.pricing):
             date[study_name] = lst[index]
 
