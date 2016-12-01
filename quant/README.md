@@ -13,7 +13,7 @@ Quant Approach
         * RSI: downswings and predicting rebounds
     + Moonshot
         * Trend lines and channels
-        * Recognize overshooting
+        * Identify overshooting
         * Deviation from related companies and market index
 - Assign importance to each indicator
     + i.e. BB might be more important than 200 SMA
@@ -34,6 +34,22 @@ Quant Approach
 6. **Assign weights** to individual indicators depending on likelihood, importance, etc and try to optimize prediction accuracy
 7. Try to implement **advanced technicals** and improve accuracy
 8. Implement **Moonshot technicals**
+
+## Instructions
+
+### Installation
+
+1. Install TA-lib libraries as per here: https://github.com/mrjbq7/ta-lib#installation
+2. Install `numpy` and `TA-lib` python packages with `pip3`
+3. Ready to go!
+
+### Running
+
+Currently only with:
+`python3 quantpredict.py`
+
+Hopefully today's prediction will soon be:
+`python3 quantpredict.py`
 
 ## Misc
 
