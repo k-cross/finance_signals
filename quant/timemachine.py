@@ -18,10 +18,11 @@ import copy
 import matplotlib.pyplot as grapher
 import sys
 import statistics
+from read_ticker_csv import get_stock_data
 
 # Static Data
-ticker = 'AMZN'
-samplespath = "../samples/%s.csv" % ticker
+# ticker = 'AMZN'
+# samplespath = "../samples/%s.csv" % ticker
 # lines_5yr = 1260
 cumulativehistory = []
 
@@ -29,7 +30,8 @@ cumulativehistory = []
 def locatedate(year, month, day):
     """ Find index of a requested day in historic data """
     d = datetime(year, month, day).date()
-    return bisect.bisect_left([row['date'] for row in cumulativehistory], d)
+    a = [row['date'] for row in cumulativehistory]
+    return bisect.bisect_left(a, d)
 
 
 def verifyprediction(stance, price, date, timeperiod=60, method='direction'):
@@ -93,21 +95,14 @@ def verifyprediction(stance, price, date, timeperiod=60, method='direction'):
 
 # Read history
 
-line_counter = 0
-with open(samplespath) as file:
-    file.readline()  # remove csv header
-    for line in file:
-        line_counter += 1
-        line = line.strip('\n')
-        data = line.split(',')
-        # Insert entry and maintain ordering from old to new
-        cumulativehistory.insert(0, {
-            'date': datetime.strptime(data[0], '%Y-%m-%d').date(),
-            'o': round(float(data[1]), 2),
-            'h': round(float(data[2]), 2),
-            'l': round(float(data[3]), 2),
-            'c': round(float(data[4]), 2),
-            'vol': int(data[5])})
+ticker = ""
+if len(sys.argv) > 1:
+    ticker = sys.argv[1]
+else:
+    sys.exit("No ticker!")
+
+for day in get_stock_data(ticker):
+    cumulativehistory.insert(0, day)
 
 # Debug stuff
 # print("read %i lines" % line_counter)
@@ -120,7 +115,7 @@ with open(samplespath) as file:
 
 # Simulate today is july 1, 2011
 start = locatedate(2011, 7, 1)  # ensure enough data for 200 SMA
-end = line_counter
+end = len(cumulativehistory)
 
 capital = 10000
 profit = 0
@@ -166,8 +161,8 @@ for s in scorelog:
 
 # Sample plotting
 
-if len(sys.argv) > 1:
-    if sys.argv[1] == "--graph":
+if len(sys.argv) > 2:
+    if sys.argv[2] == "--graph":
         # snapshot = copy.deepcopy(cumulativehistory)
         # q = quantpredict.profile(ticker, snapshot)
         # quantpredict.analyze(q)
@@ -184,7 +179,7 @@ if len(sys.argv) > 1:
         # grapher.subplot(212)
         # grapher.plot(q.studies['rsi'])
         grapher.show()
-    elif sys.argv[1] == "--graph-all":
+    elif sys.argv[2] == "--graph-all":
         snapshot = copy.deepcopy(cumulativehistory)
         q = quantpredict.profile(ticker, snapshot)
         quantpredict.analyze(q)
