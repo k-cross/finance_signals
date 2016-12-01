@@ -35,7 +35,7 @@ class profile(object):
 
     def __init__(self, ticker, pricing):
         self.ticker = ticker
-        self.pricing = pricing
+        self.pricing = pricing  # Historic pricing and studies stored here
 
     # def load(self):
     #     """ Load previous processed results """
@@ -60,7 +60,7 @@ class profile(object):
     def getplot(self, plot):
         """
         Get a particular series of data.
-        For example, specify a study (bb_lower), or price such (c)
+        For example, specify a study ('bb_lower'), or price ('c')
         """
         return [date[plot] for date in self.pricing]
 

@@ -26,7 +26,7 @@ samplespath = "../samples/%s.csv" % ticker
 cumulativehistory = []
 
 
-def jumpto(year, month, day):
+def locatedate(year, month, day):
     """ Find index of a requested day in historic data """
     d = datetime(year, month, day).date()
     return bisect.bisect_left([row['date'] for row in cumulativehistory], d)
@@ -44,7 +44,7 @@ def verifyprediction(stance, price, date, timeperiod=60, method='direction'):
 
     In:
     details of the prediction
-    stance of prediction, to buy or sell
+    stance of prediction as 1 or -1, long or short, buy or sell
     closing price of that day
     date prediction made on
 
@@ -52,20 +52,22 @@ def verifyprediction(stance, price, date, timeperiod=60, method='direction'):
     a number representing percentage movement relative to horizon. Positive is desireable, negative means price movement in opposite to prediction.
     """
     if stance == 0:
+        # print("hold steady")
         return
-    today = jumpto(date.year, date.month, date.day)
+
+    today = locatedate(date.year, date.month, date.day)
     window = cumulativehistory[today:today + timeperiod]
     score = 0
     print("stance %d, price %d, %s method" % (stance, price, method))
 
-    if stance == 1:  # buy
-        # print("buy stance")
+    if stance == 1:  # long
+        # print("long stance")
         prices = [row['h'] for row in window]
         highest = max(prices)
         period_perc = (highest - price) / price
         period_median = (statistics.median(prices) - price) / price
-    elif stance == -1:  # sell
-        # print("sell stance")
+    elif stance == -1:  # short
+        # print("short stance")
         prices = [row['l'] for row in window]
         lowest = min(prices)
         period_perc = (price - lowest) / price
@@ -78,8 +80,10 @@ def verifyprediction(stance, price, date, timeperiod=60, method='direction'):
 
     if stance != 0:
         if method == 'direction':
+            # Percentage difference with actual performance's median over timeperiod
             score = period_median
         elif method == 'order':
+            # Note this method is broken
             score = period_perc
         print("score: " + str(score))
         return score
@@ -96,25 +100,26 @@ with open(samplespath) as file:
         line_counter += 1
         line = line.strip('\n')
         data = line.split(',')
-        d = {'date': datetime.strptime(data[0], '%Y-%m-%d').date(),
-             'o': round(float(data[1]), 2),
-             'h': round(float(data[2]), 2),
-             'l': round(float(data[3]), 2),
-             'c': round(float(data[4]), 2),
-             'vol': int(data[5])}
-        cumulativehistory.insert(0, d)
+        # Insert entry and maintain ordering from old to new
+        cumulativehistory.insert(0, {
+            'date': datetime.strptime(data[0], '%Y-%m-%d').date(),
+            'o': round(float(data[1]), 2),
+            'h': round(float(data[2]), 2),
+            'l': round(float(data[3]), 2),
+            'c': round(float(data[4]), 2),
+            'vol': int(data[5])})
 
 # Debug stuff
 # print("read %i lines" % line_counter)
 # for x in range(0, 9):
 #     print(cumulativehistory[x])
 # print(cumulativehistory[200])
-# print(cumulativehistory[jumpto(2011, 7, 1)])
+# print(cumulativehistory[locatedate(2011, 7, 1)])
 
 # Analyze and make prediction
 
 # Simulate today is july 1, 2011
-start = jumpto(2011, 7, 1)  # ensure enough data for 200 SMA
+start = locatedate(2011, 7, 1)  # ensure enough data for 200 SMA
 end = line_counter
 
 capital = 10000
@@ -126,7 +131,7 @@ scores = []
 scorelog = []
 
 for x in range(start, end):
-    # snapshot = copy.deepcopy(cumulativehistory[:jumpto(2012, 7, 1) + 1])
+    # snapshot = copy.deepcopy(cumulativehistory[:locatedate(2012, 7, 1) + 1])
     snapshot = copy.deepcopy(cumulativehistory[:x + 1])
     q = quantpredict.profile(ticker, snapshot)
     quantpredict.analyze(q)
@@ -151,7 +156,7 @@ for s in scorelog:
 # print(profit)
 
 # print("Outlook on day: " + str(cumulativehistory[start]['date']))
-# # snapshot = copy.deepcopy(cumulativehistory[:jumpto(2012, 7, 1) + 1])
+# # snapshot = copy.deepcopy(cumulativehistory[:locatedate(2012, 7, 1) + 1])
 # snapshot = copy.deepcopy(cumulativehistory[:start + 1])
 # # print(snapshot[len(snapshot) - 1])
 # q = quantpredict.profile(ticker, snapshot)
