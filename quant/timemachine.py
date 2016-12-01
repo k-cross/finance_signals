@@ -34,8 +34,6 @@ def jumpTo(year, month, day):
 
 # Read history
 
-# Consider using dictionary if it helps with quantpredict so you don't need indexes all the time or something
-# https://docs.python.org/3/library/csv.html
 line_counter = 0
 with open(samplespath) as file:
     file.readline()  # remove csv header
@@ -61,13 +59,39 @@ with open(samplespath) as file:
 # Analyze and make prediction
 
 # Simulate today is july 1, 2011
-snapshot = copy.deepcopy(cumulativehistory[:jumpTo(2012, 7, 1) + 1])
-q = quantpredict.profile(ticker, snapshot)
-quantpredict.analyze(q)
-quantpredict.predict(q)
+start = jumpTo(2012, 7, 1) + 1  # ensure enough data for 200 SMA
+end = line_counter
+capital = 10000
+profit = 0
+holdings = 0
+
+for x in range(start, end):
+    print("Outlook on day: " + str(cumulativehistory[x]['date']))
+    # snapshot = copy.deepcopy(cumulativehistory[:jumpTo(2012, 7, 1) + 1])
+    snapshot = copy.deepcopy(cumulativehistory[:x])
+    q = quantpredict.profile(ticker, snapshot)
+    quantpredict.analyze(q)
+    order = quantpredict.predict(q)
+    if x + 60 < line_counter:
+        if order == 1 and capital > cumulativehistory[x]['c']:
+            gain = cumulativehistory[x + 60]['c'] - cumulativehistory[x]['c']
+            shares = round(capital / cumulativehistory[x + 60]['c'])
+            capital -= cumulativehistory[x]['c'] * shares
+            print("%d order of %d shares with gain of %d and capital %d" % (order, shares, gain * shares, capital))
+        elif order == -1 and holdings > 0:
+            gain = cumulativehistory[x]['c'] - cumulativehistory[x - 60]['c']
+            shares = round(capital / cumulativehistory[x - 60]['c'])
+            capital += cumulativehistory[x]['c'] * shares
+            print("%d order of %d shares with gain of %d and capital %d" % (order, shares, gain * shares, capital))
+    profit += gain * shares
+
+# print(profit)
 
 # Sample plotting
-
+# snapshot = copy.deepcopy(cumulativehistory)
+# q = quantpredict.profile(ticker, snapshot)
+# quantpredict.analyze(q)
+# quantpredict.predict(q)
 # print(q.priceplot())
 # grapher.subplot(211)
 grapher.plot(q.getplot('c'))
@@ -80,4 +104,4 @@ grapher.ylabel('price')
 # grapher.subplot(212)
 # grapher.plot(q.studies['rsi'])
 
-grapher.show()
+# grapher.show()

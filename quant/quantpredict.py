@@ -11,6 +11,8 @@ Given some data for a stock's historical movement, uses quantitative analysis, t
 
 Currently calibrated to daily movement; intraday not supported.
 
+'Studies' is synonymous with 'technical indicators'.
+
 In:
 python list of historical stock price up until today
 
@@ -33,7 +35,7 @@ import talib.abstract as ta
 
 class profile(object):
     """
-    General info about a ticker. 'Studies' is synonymous with 'technical indicators'.
+    Information about a ticker, incl prices and studies
     """
 
     def __init__(self, ticker, pricing):
@@ -41,16 +43,16 @@ class profile(object):
         self.pricing = pricing
         # self.studies = {}
 
-    def load(self):
-        """ Load previous processed results """
-        with open(self.ticker + ".csv") as file:
-            self.pricing = file.read()
+    # def load(self):
+    #     """ Load previous processed results """
+    #     with open(self.ticker + ".csv") as file:
+    #         self.pricing = file.read()
 
-    def save(self):
-        """ Save processed results """
-        with open(self.ticker + ".csv") as file:
-            # TODO: save as proper csv
-            file.write(self.pricing)
+    # def save(self):
+    #     """ Save processed results """
+    #     with open(self.ticker + ".csv") as file:
+    #         # TODO: save as proper csv
+    #         file.write(self.pricing)
 
     def add_study(self, study_name, lst):
         """ Adds study data points to profile """
@@ -61,12 +63,21 @@ class profile(object):
             date[study_name] = lst[index]
 
     def getplot(self, plot):
+        """
+        Get a particular series of data.
+        For example, specify a study (bb_lower), or price such (c)
+        """
         return [date[plot] for date in self.pricing]
 
 
 def analyze(profile):
     """
     Compute studies and draw conclusions about stock's performance
+
+    Development note: hard cutoffs (T/F) are discouraged, instead use arithmetic operations, percentages, etc.
+
+    In: profile with basic ohlc price data
+    Out: updated with studies and analysis about historic performance
     """
     # Update profile with technical indicators
     technical(profile)
@@ -76,7 +87,9 @@ def analyze(profile):
 def technical(profile):
     """
     Updates profile with SMA, BB, and RSI calculations
-    In: profile with relevant data
+
+    In: profile with basic ohlc price data
+    Out: profile updated with studies merged with profile's price history
     """
     prices = {'open': np.array([record['o'] for record in profile.pricing]),
               'high': np.array([record['h'] for record in profile.pricing]),
@@ -106,7 +119,16 @@ def predict(profile):
     data = profile.pricing[today]
     # print(todaysprice)
     # momentum = [data['bb_middle'], data['sma']]
-    if data['c'] > data['bb_middle'] and data['c'] > data['sma']:
-        print("Strong!")
+    price = data['c']
+
+    if price > data['bb_upper']:
+        # print("Danger! Potential price correction, sell!")
+        return -1
+    elif price > data['bb_middle'] and price > data['sma']:
+        # print("Strong!")
+        return 1
+    elif price < data['sma'] or price < data['bb_lower']:
+        # print("Potentially undervalued, buy with caution")
+        return 1
     else:
-        print("Don't buy!")
+        return 0
