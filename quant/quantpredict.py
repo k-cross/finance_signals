@@ -14,7 +14,7 @@ Currently calibrated to daily movement; intraday not supported.
 'Studies' is synonymous with 'technical indicators'.
 
 In:
-python list of historical stock price up until today
+profile or repo from stockrepo
 
 Out:
 file/list with historical pricing and indicators/analysis
@@ -23,46 +23,8 @@ predicted future movement
 Powered by magic and digital foxes
 """
 
-
 import numpy as np
 import talib.abstract as ta
-
-
-class profile(object):
-    """
-    Information about a ticker, incl prices and studies
-    """
-
-    def __init__(self, ticker, pricing):
-        self.ticker = ticker
-        self.pricing = pricing  # Historic pricing and studies stored here
-
-    # def load(self):
-    #     """ Load previous processed results """
-    #     with open(self.ticker + ".csv") as file:
-    #         self.pricing = file.read()
-
-    # def save(self):
-    #     """ Save processed results """
-    #     with open(self.ticker + ".csv") as file:
-    #         # TODO: save as proper csv
-    #         file.write(self.pricing)
-
-    def add_study(self, study_name, lst):
-        """ Adds study data points to profile """
-        for index, date in enumerate(self.pricing):
-            date[study_name] = lst[index]
-
-    # def order(type):
-    #     """ logs an order today """
-    #     pass
-
-    def getplot(self, plot):
-        """
-        Get a particular series of data.
-        For example, specify a study ('bb_lower'), or price ('c')
-        """
-        return [date[plot] for date in self.pricing]
 
 
 def analyze(profile):
@@ -86,11 +48,11 @@ def technical(profile):
     In: profile with basic ohlc price data
     Out: profile updated with studies merged with profile's price history
     """
-    prices = {'open': np.array([record['o'] for record in profile.pricing]),
-              'high': np.array([record['h'] for record in profile.pricing]),
-              'low': np.array([record['l'] for record in profile.pricing]),
-              'close': np.array([record['c'] for record in profile.pricing]),
-              'volume': np.array([record['vol'] for record in profile.pricing])}
+    prices = {'open': np.array([record['o'] for record in profile.history]),
+              'high': np.array([record['h'] for record in profile.history]),
+              'low': np.array([record['l'] for record in profile.history]),
+              'close': np.array([record['c'] for record in profile.history]),
+              'volume': np.array([record['vol'] for record in profile.history])}
     # print(prices['open'])
     # print(prices)
 
@@ -110,22 +72,22 @@ def predict(profile):
     """
     Weighs different indicators from an analyzed profile, and deduce a prediction on future movement
     """
-    today = len(profile.pricing) - 1
-    data = profile.pricing[today]
+    today = len(profile.history) - 1
+    today = profile.history[today]
     # print(todaysprice)
-    # momentum = [data['bb_middle'], data['sma']]
-    price = data['c']
+    # momentum = [today['bb_middle'], today['sma']]
+    price = today['c']
 
-    if price > data['bb_upper']:
+    if price > today['bb_upper']:
         # print("Danger! Potential price correction, sell!")
         return -1
-    elif price > data['bb_middle'] and price > data['sma']:
+    elif price > today['bb_middle'] and price > today['sma']:
         # print("Figure out if it's in a channel")
         return 0
-    elif price > data['bb_lower'] and price < data['sma']:
+    elif price > today['bb_lower'] and price < today['sma']:
         # print("Down swing, avoid")
         return 0
-    elif price < data['bb_lower'] or price < data['sma']:
+    elif price < today['bb_lower'] or price < today['sma']:
         # print("Potentially undervalued, buy with caution")
         return 1
     else:

@@ -1,40 +1,49 @@
 #!/usr/bin/python3
 """
+  _______                __  ___           __    _
+ /_  __(_)___ ___  ___  /  |/  /___ ______/ /_  (_)___  ___
+  / / / / __ `__ \/ _ \/ /|_/ / __ `/ ___/ __ \/ / __ \/ _ \
+ / / / / / / / / /  __/ /  / / /_/ / /__/ / / / / / / /  __/
+/_/ /_/_/ /_/ /_/\___/_/  /_/\__,_/\___/_/ /_/_/_/ /_/\___/
 Time Machine
-Uses historical data to go back in time, and feeds quantpredict data that was available at that time. Use to compare with actual stock movement and check the performace of quantpredict.
 
-In:
-csv of ticker
+General purpose tool for interfacing with quantpredict. Reads stock data from csv.
 
-Out:
-historical prediction
-accuracy of prediction
+Usage (coming soon):
+
+timemachine.py --ticker <ticker> ...
+
+    predict <date>
+        Generate prediction for a specified date
+
+    historic [--from <date> --to <date>]
+        Uses historical data to go back in time, and feeds quantpredict data that was available at that time. Compares the result with actual stock movement to determine performace of quantpredict. Prints out the results.
+
+    graph [all | --from <date> --to <date>] [--studies [SMA | BB | RSI]]
+        Draws graph with technical analysis overlaid. Entire graph shown by default.
+
+Powered by magic and digital foxes
 """
 
-from datetime import datetime
+from datetime import date
 import quantpredict
-import bisect
 import copy
 import matplotlib.pyplot as grapher
 import sys
 import statistics
-from read_ticker_csv import get_stock_data
 
-# Static Data
-# ticker = 'AMZN'
-# samplespath = "../samples/%s.csv" % ticker
-# lines_5yr = 1260
-cumulativehistory = []
+import stockrepo
 
 
-def locatedate(year, month, day):
-    """ Find index of a requested day in historic data """
-    d = datetime(year, month, day).date()
-    a = [row['date'] for row in cumulativehistory]
-    return bisect.bisect_left(a, d)
+def qppredict(snapshot):
+    """ Executes quantpredict analysis on a given price snapshot """
+    p = stockrepo.profile(ticker, snapshot)
+    quantpredict.analyze(p)
+    stance = quantpredict.predict(p)
+    return p, stance
 
 
-def verifyprediction(stance, price, date, timeperiod=60, method='direction'):
+def verifyprediction(stance, price, decisiondate, timeperiod=60, method='direction'):
     """
     Determine if the predicted stance is correct.
 
@@ -57,20 +66,20 @@ def verifyprediction(stance, price, date, timeperiod=60, method='direction'):
         # print("hold steady")
         return
 
-    today = locatedate(date.year, date.month, date.day)
-    window = cumulativehistory[today:today + timeperiod]
+    today = repo.locatedate(decisiondate)
+    window = repo.history[today:today + timeperiod]
     score = 0
     print("stance %d, price %d, %s method" % (stance, price, method))
 
     if stance == 1:  # long
         # print("long stance")
-        prices = [row['h'] for row in window]
+        prices = [day['h'] for day in window]
         highest = max(prices)
         period_perc = (highest - price) / price
         period_median = (statistics.median(prices) - price) / price
     elif stance == -1:  # short
         # print("short stance")
-        prices = [row['l'] for row in window]
+        prices = [day['l'] for day in window]
         lowest = min(prices)
         period_perc = (price - lowest) / price
         period_median = (price - statistics.median(prices)) / price
@@ -100,99 +109,77 @@ if len(sys.argv) > 1:
     ticker = sys.argv[1]
 else:
     sys.exit("No ticker!")
-
-for day in get_stock_data(ticker):
-    cumulativehistory.insert(0, day)
-
-# Debug stuff
-# print("read %i lines" % line_counter)
-# for x in range(0, 9):
-#     print(cumulativehistory[x])
-# print(cumulativehistory[200])
-# print(cumulativehistory[locatedate(2011, 7, 1)])
+repo = stockrepo.repo(ticker)
 
 # Analyze and make prediction
 
 # Simulate today is july 1, 2011
-start = locatedate(2011, 7, 1)  # ensure enough data for 200 SMA
-end = len(cumulativehistory)
-
-capital = 10000
-profit = 0
-holdings = 0
+start = repo.locatedate(date(2011, 7, 1))  # ensure enough data for 200 SMA
+end = len(repo.history)
 
 moves = 0
 scores = []
 scorelog = []
 
-for x in range(start, end):
-    # snapshot = copy.deepcopy(cumulativehistory[:locatedate(2012, 7, 1) + 1])
-    snapshot = copy.deepcopy(cumulativehistory[:x + 1])
-    q = quantpredict.profile(ticker, snapshot)
-    quantpredict.analyze(q)
-    stance = quantpredict.predict(q)
-    if stance != 0:
-        print("Outlook on day: " + str(x))
-        moves += 1
-    r = verifyprediction(stance, snapshot[x]['c'], snapshot[x]['date'], method="direction")
-    if r is not None:
-        round(r, 3)
-        scores.append(r)
-        scorelog.append((str(snapshot[x]['date']), r))
+# for x in range(start, end):
+#     # snapshot = copy.deepcopy(repo.history[:repo.locatedate(2012, 7, 1) + 1])
+#     snapshot = copy.deepcopy(repo.history[:x + 1])
+#     p, stance = qppredict(snapshot)
+#     if stance != 0:
+#         print("Outlook on day: " + str(x))
+#         moves += 1
+#     r = verifyprediction(stance, snapshot[x]['c'], snapshot[x]['date'], method="direction")
+#     if r is not None:
+#         round(r, 3)
+#         scores.append(r)
+#         scorelog.append((str(snapshot[x]['date']), r))
 
-print("Avg performance of transactions: %f" % statistics.mean(scores))
-print("Total moves: %d" % moves)
-print("Total profitable moves: %d" % sum(x > 0 for x in scores))
-print("Total high-performance moves: %d" % sum(x > 0.1 for x in scores))
-print("Prediction accuracy: %f" % (sum(x > 0.05 for x in scores) / moves))
-print("Full score log:")
-for s in scorelog:
-    print(s)
-# print(profit)
+# print("Avg performance of transactions: %f" % statistics.mean(scores))
+# print("Total moves: %d" % moves)
+# print("Total profitable moves: %d" % sum(x > 0 for x in scores))
+# print("Total high-performance moves: %d" % sum(x > 0.1 for x in scores))
+# print("Prediction accuracy: %f" % (sum(x > 0.05 for x in scores) / moves))
+# print("Full score log:")
+# for s in scorelog:
+#     print(s)
+# # print(profit)
 
-# print("Outlook on day: " + str(cumulativehistory[start]['date']))
-# # snapshot = copy.deepcopy(cumulativehistory[:locatedate(2012, 7, 1) + 1])
-# snapshot = copy.deepcopy(cumulativehistory[:start + 1])
+# print("Outlook on day: " + str(repo.history[start]['date']))
+# # snapshot = copy.deepcopy(repo.history[:repo.locatedate(2012, 7, 1) + 1])
+# snapshot = copy.deepcopy(repo.history)
 # # print(snapshot[len(snapshot) - 1])
-# q = quantpredict.profile(ticker, snapshot)
-# quantpredict.analyze(q)
-# stance = quantpredict.predict(q)
+# p, stance = qppredict(snapshot)
 # verifyprediction(stance, snapshot[start]['c'], snapshot[start]['date'], method="order")
 
 # Sample plotting
 
 if len(sys.argv) > 2:
     if sys.argv[2] == "--graph":
-        # snapshot = copy.deepcopy(cumulativehistory)
-        # q = quantpredict.profile(ticker, snapshot)
-        # quantpredict.analyze(q)
-        # quantpredict.predict(q)
-        # print(q.priceplot())
+        p, stance = qppredict(repo.history)
         # grapher.subplot(211)
-        grapher.plot(q.getplot('c'))
-        grapher.plot(q.getplot('sma'))
-        grapher.plot(q.getplot('bb_upper'))
-        grapher.plot(q.getplot('bb_middle'))
-        grapher.plot(q.getplot('bb_lower'))
+        grapher.plot(p.getplot('c'))
+        grapher.plot(p.getplot('sma'))
+        grapher.plot(p.getplot('bb_upper'))
+        grapher.plot(p.getplot('bb_middle'))
+        grapher.plot(p.getplot('bb_lower'))
         grapher.ylabel('price')
 
         # grapher.subplot(212)
-        # grapher.plot(q.studies['rsi'])
+        # grapher.plot(p.studies['rsi'])
         grapher.show()
     elif sys.argv[2] == "--graph-all":
-        snapshot = copy.deepcopy(cumulativehistory)
-        q = quantpredict.profile(ticker, snapshot)
-        quantpredict.analyze(q)
-        quantpredict.predict(q)
-        # print(q.priceplot())
+        p, stance = qppredict(repo.history)
+        quantpredict.analyze(p)
+        quantpredict.predict(p)
+        # print(p.priceplot())
         # grapher.subplot(211)
-        grapher.plot(q.getplot('c'))
-        grapher.plot(q.getplot('sma'))
-        grapher.plot(q.getplot('bb_upper'))
-        grapher.plot(q.getplot('bb_middle'))
-        grapher.plot(q.getplot('bb_lower'))
+        grapher.plot(p.getplot('c'))
+        grapher.plot(p.getplot('sma'))
+        grapher.plot(p.getplot('bb_upper'))
+        grapher.plot(p.getplot('bb_middle'))
+        grapher.plot(p.getplot('bb_lower'))
         grapher.ylabel('price')
 
         # grapher.subplot(212)
-        # grapher.plot(q.studies['rsi'])
+        # grapher.plot(p.studies['rsi'])
         grapher.show()
