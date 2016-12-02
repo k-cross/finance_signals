@@ -32,15 +32,16 @@ Quant Approach
 4. ~~Controller checks prediction vs actual price, **scoots to next date** and calculates again, simulating passing of time, prediction accuracy does not matter yet~~
 5. ~~**Run on entire historical data set** and see how it performs~~
 6. **Assign weights** to individual indicators depending on likelihood, importance, etc and try to optimize prediction accuracy
-7. Try to implement **advanced technicals** and improve accuracy
-8. Implement **Moonshot technicals**
+7. Implement mapreduce by **distributing processing for historic data**
+8. Try to implement **advanced technicals** and improve accuracy
+9. Implement **Moonshot technicals**
 
 ## Instructions
 
 ### Installation
 
 1. Install TA-lib libraries as per here: https://github.com/mrjbq7/ta-lib#installation
-2. Install `numpy` and `TA-lib` python packages with `pip3`
+2. Install `matplotlib`, `tkinter`, `numpy` and `TA-lib` python packages with `pip3`, and any others that may be missing.
 3. Ready to go!
 
 ### Running
