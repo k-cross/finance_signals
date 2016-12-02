@@ -102,6 +102,22 @@ def verifyprediction(stance, price, decisiondate, timeperiod=60, method='directi
         return None
 
 
+def stockgraph(repo, studies=False, orders=False):
+    p, stance = qppredict(repo.history)
+    # grapher.subplot(211)
+    grapher.plot(p.getplot('c'))
+    grapher.ylabel('price')
+    if studies:
+        grapher.plot(p.getplot('sma'))
+        grapher.plot(p.getplot('bb_upper'))
+        grapher.plot(p.getplot('bb_middle'))
+        grapher.plot(p.getplot('bb_lower'))
+    if orders:
+        grapher.plot(p.getplot)
+    # grapher.subplot(212)
+    # grapher.plot(p.studies['rsi'])
+    grapher.show()
+
 # Read history
 
 ticker = ""
@@ -113,35 +129,38 @@ repo = stockrepo.repo(ticker)
 
 # Analyze and make prediction
 
+quantpredict.analyze(repo)
+quantpredict.
+
 # Simulate today is july 1, 2011
-start = repo.locatedate(date(2011, 7, 1))  # ensure enough data for 200 SMA
-end = len(repo.history)
+# start = repo.locatedate(date(2011, 7, 1))  # ensure enough data for 200 SMA
+# end = len(repo.history)
 
-moves = 0
-scores = []
-scorelog = []
+# moves = 0
+# scores = []
+# scorelog = []
 
-for x in range(start, end):
-    # snapshot = copy.deepcopy(repo.history[:repo.locatedate(2012, 7, 1) + 1])
-    snapshot = copy.deepcopy(repo.history[:x + 1])
-    p, stance = qppredict(snapshot)
-    if stance != 0:
-        print("Outlook on day: " + str(x))
-        moves += 1
-    r = verifyprediction(stance, snapshot[x]['c'], snapshot[x]['date'], method="direction")
-    if r is not None:
-        round(r, 3)
-        scores.append(r)
-        scorelog.append((str(snapshot[x]['date']), r))
+# for x in range(start, end):
+#     # snapshot = copy.deepcopy(repo.history[:repo.locatedate(2012, 7, 1) + 1])
+#     snapshot = copy.deepcopy(repo.history[:x + 1])
+#     p, stance = qppredict(snapshot)
+#     if stance != 0:
+#         print("Outlook on day: " + str(x))
+#         moves += 1
+#     r = verifyprediction(stance, snapshot[x]['c'], snapshot[x]['date'], method="direction")
+#     if r is not None:
+#         round(r, 3)
+#         scores.append(r)
+#         scorelog.append((str(snapshot[x]['date']), r))
 
-print("Avg performance of transactions: %f" % statistics.mean(scores))
-print("Total moves: %d" % moves)
-print("Total profitable moves: %d" % sum(x > 0 for x in scores))
-print("Total high-performance moves: %d" % sum(x > 0.1 for x in scores))
-print("Prediction accuracy: %f" % (sum(x > 0.05 for x in scores) / moves))
-print("Full score log:")
-for s in scorelog:
-    print(s)
+# print("Avg performance of transactions: %f" % statistics.mean(scores))
+# print("Total moves: %d" % moves)
+# print("Total profitable moves: %d" % sum(x > 0 for x in scores))
+# print("Total high-performance moves: %d" % sum(x > 0.1 for x in scores))
+# print("Prediction accuracy: %f" % (sum(x > 0.05 for x in scores) / moves))
+# print("Full score log:")
+# for s in scorelog:
+#     print(s)
 # print(profit)
 
 # print("Outlook on day: " + str(repo.history[start]['date']))
