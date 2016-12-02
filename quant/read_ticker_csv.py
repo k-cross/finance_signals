@@ -1,5 +1,5 @@
 # import csv
-# Get Ticker From System Param.
+""" Get Ticker From System Param """
 
 from datetime import datetime
 

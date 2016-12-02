@@ -1,17 +1,5 @@
 #!/usr/bin/python3
-"""
-   _____ __             __   ____
-  / ___// /_____  _____/ /__/ __ \___  ____  ____
-  \__ \/ __/ __ \/ ___/ //_/ /_/ / _ \/ __ \/ __ \
- ___/ / /_/ /_/ / /__/ ,< / _, _/  __/ /_/ / /_/ /
-/____/\__/\____/\___/_/|_/_/ |_|\___/ .___/\____/
-                                   /_/
-StockRepo
-
-Stores and manages data for a specific ticker
-
-Powered by magic and digital foxes
-"""
+""" Stores and manages data for a specific ticker """
 
 # from datetime import date
 import bisect
