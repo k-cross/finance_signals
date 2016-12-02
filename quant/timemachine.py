@@ -121,28 +121,28 @@ moves = 0
 scores = []
 scorelog = []
 
-# for x in range(start, end):
-#     # snapshot = copy.deepcopy(repo.history[:repo.locatedate(2012, 7, 1) + 1])
-#     snapshot = copy.deepcopy(repo.history[:x + 1])
-#     p, stance = qppredict(snapshot)
-#     if stance != 0:
-#         print("Outlook on day: " + str(x))
-#         moves += 1
-#     r = verifyprediction(stance, snapshot[x]['c'], snapshot[x]['date'], method="direction")
-#     if r is not None:
-#         round(r, 3)
-#         scores.append(r)
-#         scorelog.append((str(snapshot[x]['date']), r))
+for x in range(start, end):
+    # snapshot = copy.deepcopy(repo.history[:repo.locatedate(2012, 7, 1) + 1])
+    snapshot = copy.deepcopy(repo.history[:x + 1])
+    p, stance = qppredict(snapshot)
+    if stance != 0:
+        print("Outlook on day: " + str(x))
+        moves += 1
+    r = verifyprediction(stance, snapshot[x]['c'], snapshot[x]['date'], method="direction")
+    if r is not None:
+        round(r, 3)
+        scores.append(r)
+        scorelog.append((str(snapshot[x]['date']), r))
 
-# print("Avg performance of transactions: %f" % statistics.mean(scores))
-# print("Total moves: %d" % moves)
-# print("Total profitable moves: %d" % sum(x > 0 for x in scores))
-# print("Total high-performance moves: %d" % sum(x > 0.1 for x in scores))
-# print("Prediction accuracy: %f" % (sum(x > 0.05 for x in scores) / moves))
-# print("Full score log:")
-# for s in scorelog:
-#     print(s)
-# # print(profit)
+print("Avg performance of transactions: %f" % statistics.mean(scores))
+print("Total moves: %d" % moves)
+print("Total profitable moves: %d" % sum(x > 0 for x in scores))
+print("Total high-performance moves: %d" % sum(x > 0.1 for x in scores))
+print("Prediction accuracy: %f" % (sum(x > 0.05 for x in scores) / moves))
+print("Full score log:")
+for s in scorelog:
+    print(s)
+# print(profit)
 
 # print("Outlook on day: " + str(repo.history[start]['date']))
 # # snapshot = copy.deepcopy(repo.history[:repo.locatedate(2012, 7, 1) + 1])
