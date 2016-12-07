@@ -26,12 +26,13 @@ Powered by magic and digital foxes
 """
 
 from datetime import date
-import quantpredict
 import copy
 import matplotlib.pyplot as grapher
 import sys
 import statistics
+import argparse
 
+import quantpredict
 import stockrepo
 
 
@@ -102,27 +103,51 @@ def verifyprediction(stance, price, decisiondate, timeperiod=60, method='directi
         return None
 
 
+def historytrials():
+    pass
+
+
 def stockgraph(repo, studies=False, orders=False):
-    p, stance = qppredict(repo.history)
-    # grapher.subplot(211)
-    grapher.plot(p.getplot('c'))
+    if studies and "rsi" in args.studies:
+        grapher.subplot(211)
+    grapher.plot(repo.getplot('c'))
     grapher.ylabel('price')
     if studies:
-        grapher.plot(p.getplot('sma'))
-        grapher.plot(p.getplot('bb_upper'))
-        grapher.plot(p.getplot('bb_middle'))
-        grapher.plot(p.getplot('bb_lower'))
+        if "sma" in args.studies:
+            grapher.plot(repo.getplot('sma'))
+        if "bb" in args.studies:
+            grapher.plot(repo.getplot('bb_upper'))
+            grapher.plot(repo.getplot('bb_middle'))
+            grapher.plot(repo.getplot('bb_lower'))
+        if "rsi" in args.studies:
+            grapher.subplot(212)
+            grapher.plot(repo.getplot('rsi'))
     if orders:
-        grapher.plot(p.getplot)
-    # grapher.subplot(212)
-    # grapher.plot(p.studies['rsi'])
+        grapher.plot(repo.getplot('order'))
     grapher.show()
+
+
+parser = argparse.ArgumentParser(description='Time machine to go back in time and test trading algorithm on historical data.')
+# parser.add_argument('integers', metavar='N', type=int, nargs='+', help='an integer for the accumulator')
+parser.add_argument('ticker', help='stock ticker being examined')
+
+# General args
+parser.add_argument('--from', dest='from', help='starting point of time machine')
+parser.add_argument('--to', dest='to', help='ending point of time machine')
+
+# Graphing args
+group = parser.add_mutually_exclusive_group()
+group.add_argument('--graph', dest='graph', action='store_true', help='graph a portion of the stock history')
+group.add_argument('--graph-all', dest='graphall', action='store_true', help='graph entire stock repo')
+parser.add_argument('--studies', dest='studies', nargs='+', help='studies to draw on the graph (SMA, BB, RSI)')
+parser.add_argument('--orders', dest='orders', action='store_true', help='draw orders on stock graph')
+args = parser.parse_args()
 
 # Read history
 
-ticker = ""
+ticker = args.ticker
 if len(sys.argv) > 1:
-    ticker = sys.argv[1]
+    ticker = args.ticker
 else:
     sys.exit("No ticker!")
 repo = stockrepo.repo(ticker)
@@ -130,37 +155,39 @@ repo = stockrepo.repo(ticker)
 # Analyze and make prediction
 
 quantpredict.analyze(repo)
-quantpredict.
 
 # Simulate today is july 1, 2011
-# start = repo.locatedate(date(2011, 7, 1))  # ensure enough data for 200 SMA
-# end = len(repo.history)
 
-# moves = 0
-# scores = []
-# scorelog = []
+start = repo.locatedate(date(2011, 7, 1))  # ensure enough data for 200 SMA
+end = len(repo.history)
 
-# for x in range(start, end):
-#     # snapshot = copy.deepcopy(repo.history[:repo.locatedate(2012, 7, 1) + 1])
-#     snapshot = copy.deepcopy(repo.history[:x + 1])
-#     p, stance = qppredict(snapshot)
-#     if stance != 0:
-#         print("Outlook on day: " + str(x))
-#         moves += 1
-#     r = verifyprediction(stance, snapshot[x]['c'], snapshot[x]['date'], method="direction")
-#     if r is not None:
-#         round(r, 3)
-#         scores.append(r)
-#         scorelog.append((str(snapshot[x]['date']), r))
+moves = 0
+scores = []
+scorelog = []
 
-# print("Avg performance of transactions: %f" % statistics.mean(scores))
-# print("Total moves: %d" % moves)
-# print("Total profitable moves: %d" % sum(x > 0 for x in scores))
-# print("Total high-performance moves: %d" % sum(x > 0.1 for x in scores))
-# print("Prediction accuracy: %f" % (sum(x > 0.05 for x in scores) / moves))
-# print("Full score log:")
-# for s in scorelog:
-#     print(s)
+for x in range(start, end):
+    # snapshot = copy.deepcopy(repo.history[:repo.locatedate(2012, 7, 1) + 1])
+    # snapshot = copy.deepcopy(repo.history[:x + 1])
+    # p, stance = qppredict(snapshot)
+    tradingday = repo.history[x]
+    stance = quantpredict.predict(repo, tradingday['date'])
+    if stance != 0:
+        print("Outlook on %s, day %d" % (tradingday['date'], x))
+        moves += 1
+        r = verifyprediction(stance, tradingday['c'], tradingday['date'], method="direction")
+    # if r is not None:
+        round(r, 3)
+        scores.append(r)
+        scorelog.append((str(tradingday['date']), r))
+
+print("Avg performance of transactions: %f" % statistics.mean(scores))
+print("Total moves: %d" % moves)
+print("Total profitable moves: %d" % sum(x > 0 for x in scores))
+print("Total high-performance moves: %d" % sum(x > 0.1 for x in scores))
+print("Prediction accuracy: %f" % (sum(x > 0.05 for x in scores) / moves))
+print("Full score log:")
+for s in scorelog:
+    print(s)
 # print(profit)
 
 # print("Outlook on day: " + str(repo.history[start]['date']))
@@ -172,33 +199,8 @@ quantpredict.
 
 # Sample plotting
 
-if len(sys.argv) > 2:
-    if sys.argv[2] == "--graph":
-        p, stance = qppredict(repo.history)
-        # grapher.subplot(211)
-        grapher.plot(p.getplot('c'))
-        grapher.plot(p.getplot('sma'))
-        grapher.plot(p.getplot('bb_upper'))
-        grapher.plot(p.getplot('bb_middle'))
-        grapher.plot(p.getplot('bb_lower'))
-        grapher.ylabel('price')
-
-        # grapher.subplot(212)
-        # grapher.plot(p.studies['rsi'])
-        grapher.show()
-    elif sys.argv[2] == "--graph-all":
-        p, stance = qppredict(repo.history)
-        quantpredict.analyze(p)
-        quantpredict.predict(p)
-        # print(p.priceplot())
-        # grapher.subplot(211)
-        grapher.plot(p.getplot('c'))
-        grapher.plot(p.getplot('sma'))
-        grapher.plot(p.getplot('bb_upper'))
-        grapher.plot(p.getplot('bb_middle'))
-        grapher.plot(p.getplot('bb_lower'))
-        grapher.ylabel('price')
-
-        # grapher.subplot(212)
-        # grapher.plot(p.studies['rsi'])
-        grapher.show()
+if args.graph:
+    stockgraph(repo, studies=args.studies, orders=args.orders)
+    # Currently no difference
+elif args.graphall:
+    stockgraph(repo, studies=args.studies, orders=args.orders)
