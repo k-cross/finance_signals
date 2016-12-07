@@ -3,7 +3,7 @@
 
 # from datetime import date
 import bisect
-from read_ticker_csv import get_stock_data
+from readticker import csvimport
 
 
 class repo(object):
@@ -14,7 +14,7 @@ class repo(object):
     def __init__(self, ticker):
         super(repo, self).__init__()
         self.ticker = ticker
-        self.history = list(reversed(get_stock_data(self.ticker)))
+        self.history = list(reversed(csvimport(self.ticker)))
         # self.history = []
         # self.orders = []
 
@@ -32,7 +32,7 @@ class repo(object):
     # def populatehistory(self):
     #     """ Retrieve price history from csv """
     #     # Ordered old to new
-    #     self.history = list(reversed(get_stock_data(self.ticker)))
+    #     self.history = list(reversed(csvimport(self.ticker)))
 
     def locatedate(self, date):
         """ Find index of a requested day in historic data """

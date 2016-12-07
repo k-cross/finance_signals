@@ -4,7 +4,7 @@
 from datetime import datetime
 
 
-def get_stock_data(ticker):
+def csvimport(ticker):
     # Static Data
     stock_day_list = []
     samplespath = "../samples/%s.csv" % ticker
