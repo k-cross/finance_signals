@@ -14,8 +14,8 @@ class repo(object):
     def __init__(self, ticker):
         super(repo, self).__init__()
         self.ticker = ticker
-        print("Get all history")
-        self.history = []
+        self.history = list(reversed(get_stock_data(self.ticker)))
+        # self.history = []
         # self.orders = []
 
     # def load(self):
@@ -29,10 +29,10 @@ class repo(object):
     #         # TODO: save as proper csv
     #         file.write(self.history)
 
-    def populatehistory(self):
-        """ Retrieve price history from csv """
-        # Ordered old to new
-        self.history = list(reversed(get_stock_data(self.ticker)))
+    # def populatehistory(self):
+    #     """ Retrieve price history from csv """
+    #     # Ordered old to new
+    #     self.history = list(reversed(get_stock_data(self.ticker)))
 
     def locatedate(self, date):
         """ Find index of a requested day in historic data """
@@ -57,10 +57,10 @@ class repo(object):
         sell = []
         return buy, sell
 
-    # def order(self, date, direction):
-    #     """ logs an order at specified day """
-    #     day = self.locatedate(date)
-    #     self.history[day]['order'] = "buy"
+    def order(self, date, direction):
+        """ logs an order at specified day """
+        day = self.locatedate(date)
+        self.history[day]['order'] = "buy"
 
 
 class profile(object):

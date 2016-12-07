@@ -68,11 +68,13 @@ def technical(profile):
     profile.add_study("rsi", [round(float(point), 2) for point in rsi])
 
 
-def predict(profile):
+def predict(profile, date):
     """
     Weighs different indicators from an analyzed profile, and deduce a prediction on future movement
     """
-    today = len(profile.history) - 1
+
+    today = profile.locatedate(date)
+    # today = len(profile.history) - 1
     today = profile.history[today]
     # print(todaysprice)
     # momentum = [today['bb_middle'], today['sma']]
